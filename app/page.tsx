@@ -2,6 +2,7 @@ import Annotate from "./Annotate";
 import Navbar from "./components/Navbar";
 import Dashboard from "./Dashboard";
 import Submission from "./Submission";
+import Login from "./Login";
 
 export default function App() {
   return (
@@ -15,7 +16,8 @@ export default function App() {
 
   {/* <Annotate /> */}
   {/* <Dashboard /> */}
-  <Submission />
+  {/* <Submission /> */}
+  <Login />
 
   </div>
 
