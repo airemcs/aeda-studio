@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from "react"
 
-const BASE_API = "/api" 
+const BASE_API = "/api"
 
 interface Props {
   onSuccess: (files: File[]) => void
@@ -30,7 +30,7 @@ export default function UploadingPanel({ onSuccess, onError }: Props) {
     setIsDragging(false)
     const dropped = Array.from(e.dataTransfer.files).filter(isAllowed)
     if (dropped.length) {
-      setFiles((prev) => [...prev, ...dedupe(prev, dropped)])
+      setFiles(prev => [...prev, ...dedupe(prev, dropped)])
     }
   }, [])
 
@@ -39,18 +39,18 @@ export default function UploadingPanel({ onSuccess, onError }: Props) {
   }
 
   function dedupe(existing: File[], incoming: File[]) {
-    const names = new Set(existing.map((f) => f.name))
-    return incoming.filter((f) => !names.has(f.name))
+    const names = new Set(existing.map(f => f.name))
+    return incoming.filter(f => !names.has(f.name))
   }
 
   function handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const chosen = Array.from(e.target.files || []).filter(isAllowed)
-    if (chosen.length) setFiles((prev) => [...prev, ...dedupe(prev, chosen)])
+    if (chosen.length) setFiles(prev => [...prev, ...dedupe(prev, chosen)])
     e.target.value = ""
   }
 
   function removeFile(name: string) {
-    setFiles((prev) => prev.filter((f) => f.name !== name))
+    setFiles(prev => prev.filter(f => f.name !== name))
   }
 
   async function apiPing(): Promise<boolean> {
@@ -93,7 +93,7 @@ export default function UploadingPanel({ onSuccess, onError }: Props) {
         for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
           const start = chunkIndex * CHUNK_BYTES
           const end = Math.min(file.size, start + CHUNK_BYTES)
-          const blob = file.slice(start, end)
+            const blob = file.slice(start, end)
 
           const form = new FormData()
           form.append("fileId", fileId)
@@ -102,7 +102,6 @@ export default function UploadingPanel({ onSuccess, onError }: Props) {
           form.append("originalFilename", file.name)
           form.append("file", blob, file.name)
 
-          // Use XHR for progress within each chunk
           await new Promise<void>((resolve, reject) => {
             const xhr = new XMLHttpRequest()
             xhr.open("POST", "/api/upload")
@@ -161,28 +160,16 @@ export default function UploadingPanel({ onSuccess, onError }: Props) {
   }
 
   function formatBytes(bytes: number) {
-    if (bytes >= 1024 * 1024 * 1024) {
-      return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB"
-    }
-    if (bytes >= 1024 * 1024) {
-      return (bytes / (1024 * 1024)).toFixed(2) + " MB"
-    }
-    if (bytes >= 1024) {
-      return (bytes / 1024).toFixed(2) + " KB"
-    }
+    if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB"
+    if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + " MB"
+    if (bytes >= 1024) return (bytes / 1024).toFixed(2) + " KB"
     return bytes + " B"
   }
 
   function formatSpeed(bytesPerSec: number) {
-    if (bytesPerSec >= 1024 * 1024 * 1024) {
-      return (bytesPerSec / (1024 * 1024 * 1024)).toFixed(2) + " GB/s"
-    }
-    if (bytesPerSec >= 1024 * 1024) {
-      return (bytesPerSec / (1024 * 1024)).toFixed(2) + " MB/s"
-    }
-    if (bytesPerSec >= 1024) {
-      return (bytesPerSec / 1024).toFixed(2) + " KB/s"
-    }
+    if (bytesPerSec >= 1024 * 1024 * 1024) return (bytesPerSec / (1024 * 1024 * 1024)).toFixed(2) + " GB/s"
+    if (bytesPerSec >= 1024 * 1024) return (bytesPerSec / (1024 * 1024)).toFixed(2) + " MB/s"
+    if (bytesPerSec >= 1024) return (bytesPerSec / 1024).toFixed(2) + " KB/s"
     return bytesPerSec + " B/s"
   }
 
@@ -195,17 +182,12 @@ export default function UploadingPanel({ onSuccess, onError }: Props) {
 
   let speedStr = ""
   let etaStr = ""
-  if (
-    uploading &&
-    uploadStartTime &&
-    lastUpdateTime &&
-    lastUploadedBytes > 0
-  ) {
+  if (uploading && uploadStartTime && lastUpdateTime && lastUploadedBytes > 0) {
     const elapsedSec = (lastUpdateTime - uploadStartTime) / 1000
     const speed = lastUploadedBytes / Math.max(elapsedSec, 1e-2)
     speedStr = formatSpeed(speed)
-    const totalBytes = files.reduce((s, f) => s + f.size, 0)
-    const remainingBytes = totalBytes - lastUploadedBytes
+    const totalBytesAll = files.reduce((s, f) => s + f.size, 0)
+    const remainingBytes = totalBytesAll - lastUploadedBytes
     const etaSec = speed > 0 ? remainingBytes / speed : 0
     etaStr = formatTime(etaSec)
   }
@@ -213,30 +195,16 @@ export default function UploadingPanel({ onSuccess, onError }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <div
-        onDragOver={(e) => {
-          e.preventDefault()
-          setIsDragging(true)
-        }}
-        onDragLeave={(e) => {
-          e.preventDefault()
-          setIsDragging(false)
-        }}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+        onDragLeave={(e) => { e.preventDefault(); setIsDragging(false) }}
         onDrop={onDrop}
-        className={`border-2 border-dashed rounded-xl p-8 transition ${
-          isDragging
-            ? "border-indigo-500 bg-indigo-50"
-            : "border-stone-400 bg-stone-100"
-        } flex flex-col items-center gap-4 text-stone-700`}
+        className={`border-2 border-dashed rounded-xl p-8 transition ${isDragging ? "border-indigo-500 bg-indigo-50" : "border-stone-400 bg-stone-100"} flex flex-col items-center gap-4 text-stone-700`}
       >
-        <div className="text-lg font-semibold">
-          Drag & Drop Videos or ZIP here
-        </div>
-        <div className="text-sm opacity-70">
-          Accepted: MP4 / WebM / any video format + .zip
-        </div>
+        <div className="text-lg font-semibold">Drag & Drop Videos or ZIP here</div>
+        <div className="text-sm opacity-70">Accepted: MP4 / WebM / any video format + .zip</div>
         <button
           type="button"
-            className="btn btn-sm btn-primary"
+          className="btn btn-sm btn-primary"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
         >
@@ -254,14 +222,12 @@ export default function UploadingPanel({ onSuccess, onError }: Props) {
 
       {files.length > 0 && (
         <div className="bg-white rounded-xl shadow p-4 flex flex-col gap-3 max-h-64 overflow-auto">
-          <div className="font-medium text-stone-600">
-            Files ({files.length})
-          </div>
+          <div className="font-medium text-stone-600">Files ({files.length})</div>
           <ul className="flex flex-col gap-2 text-sm">
-            {files.map((f) => (
+            {files.map(f => (
               <li
                 key={f.name}
-                className="flex items-center justify-between gap-4 border rounded px-3 py-1.5" 
+                className="flex items-center justify-between gap-4 border rounded px-3 py-1.5"
               >
                 <span className="truncate text-stone-800">{f.name}</span>
                 <button
@@ -275,22 +241,18 @@ export default function UploadingPanel({ onSuccess, onError }: Props) {
             ))}
           </ul>
           <div className="flex items-center gap-3">
-          
-
-            
-              {uploading ? (
-                <span className="text-black">Uploading...</span>
-              ) : (
-                <button
-                  onClick={upload}
-                  disabled={uploading}
-                  className="btn btn-sm btn-success"
-                  style={{ minWidth: 90 }}
-                >
-                  Upload
-                </button>
-              )}
-
+            {uploading ? (
+              <span className="text-black">Uploading...</span>
+            ) : (
+              <button
+                onClick={upload}
+                disabled={uploading}
+                className="btn btn-sm btn-success"
+                style={{ minWidth: 90 }}
+              >
+                Upload
+              </button>
+            )}
             {uploading && (
               <div className="flex items-center gap-2 flex-1">
                 <div className="h-2 bg-stone-200 rounded overflow-hidden flex-1">
@@ -306,30 +268,24 @@ export default function UploadingPanel({ onSuccess, onError }: Props) {
                   </span>
                   {speedStr && (
                     <>
-                      &nbsp;•&nbsp;
-                      <span className="opacity-80">{speedStr}</span>
+                      &nbsp;•&nbsp;<span className="opacity-80">{speedStr}</span>
                     </>
                   )}
                   {etaStr && (
                     <>
-                      &nbsp;•&nbsp;
-                      <span className="opacity-80">{etaStr} remaining</span>
+                      &nbsp;•&nbsp;<span className="opacity-80">{etaStr} remaining</span>
                     </>
                   )}
                 </span>
               </div>
             )}
           </div>
-          {error && (
-            <div className="text-red-600 text-xs font-medium">{error}</div>
-          )}
+          {error && <div className="text-red-600 text-xs font-medium">{error}</div>}
         </div>
       )}
 
       {!files.length && (
-        <div className="text-sm text-stone-500">
-          No files selected yet.
-        </div>
+        <div className="text-sm text-stone-500">No files selected yet.</div>
       )}
     </div>
   )

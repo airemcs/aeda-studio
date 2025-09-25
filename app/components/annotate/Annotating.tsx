@@ -1,11 +1,11 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { FaFileImage } from "react-icons/fa"
 import { type VideoData } from "./types"
 
 interface Props {
   selectedVideo: VideoData | null
   currentFrame: number
-  setCurrentFrame: (v: number) => void         
+  setCurrentFrame: (v: number) => void          // now treated as "user scrub"
   isSynced?: boolean
   onSyncToggle?: () => void
   expectedTotal?: number | null
@@ -22,9 +22,20 @@ export default function AnnotatingPanel({
   const frames = selectedVideo?.frames || []
   const currentFrameData = frames[currentFrame]
 
-  if (currentFrame >= frames.length && frames.length > 0) {
-    setCurrentFrame(frames.length - 1)
-  }
+  // Handle frame deletion - adjust currentFrame if it's out of bounds
+  useEffect(() => {
+    // Do nothing while there are still no frames (prevents false unsync)
+    if (frames.length === 0) return
+
+    // If current frame is now out of range after a deletion, clamp
+    if (currentFrame >= frames.length) {
+      const newFrame = Math.max(0, frames.length - 1)
+      if (newFrame !== currentFrame) {
+        setCurrentFrame(newFrame) // real adjustment
+      }
+    }
+    // Otherwise do NOT call setCurrentFrame (avoids marking unsynced)
+  }, [frames.length, currentFrame, setCurrentFrame])
 
   const totalDisplay = expectedTotal || selectedVideo?.totalFrames || frames.length
   const rangeMax = Math.max(0, frames.length - 1) 
@@ -46,7 +57,7 @@ export default function AnnotatingPanel({
           )}
           <div className="absolute top-2 left-2 bg-stone-900/70 text-stone-200 text-[11px] px-2 py-1 rounded">
             {frames.length
-              ? `Frame ${currentFrame + 1} / ${totalDisplay || "?"}`
+              ? `Frame ${Math.min(currentFrame + 1, frames.length)} / ${frames.length}`
               : "No frames"}
           </div>
         </div>
@@ -68,7 +79,7 @@ export default function AnnotatingPanel({
               }}
             />
             <span className="whitespace-nowrap text-sm font-medium text-stone-700">
-              {currentFrame}/{Math.max(0, totalDisplay - 1)}
+              {Math.min(currentFrame, rangeMax)}/{rangeMax}
             </span>
             <button
               type="button"
@@ -88,14 +99,14 @@ export default function AnnotatingPanel({
 
       {/* Right sidebar: vehicle counts */}
       <div className="flex flex-col bg-white shadow-md rounded-xl w-full h-fit overflow-hidden">
-        {currentFrameData ? (
+        {currentFrameData && frames.length > 0 ? (
           <>
             <div className="bg-stone-100 border-b border-stone-300 px-4 py-2 text-center flex justify-between items-center">
               <span className="text-lg font-semibold tracking-wide text-stone-700">
-                Frame #{String(currentFrame).padStart(4, "0")}
+                Frame #{String(Math.min(currentFrame, frames.length - 1)).padStart(4, "0")}
               </span>
               <span className="text-[10px] text-stone-500">
-                Received: {frames.length}{expectedTotal ? ` / ${expectedTotal}` : ""}
+                Total: {frames.length}{expectedTotal ? ` / ${expectedTotal}` : ""}
               </span>
             </div>
             <div className="grid grid-cols-2 border-t border-l border-stone-300">
@@ -124,7 +135,7 @@ export default function AnnotatingPanel({
           </>
         ) : (
           <div className="px-4 py-6 text-center text-xs text-stone-500">
-            No frame selected.
+            {frames.length === 0 ? "No frames available." : "No frame selected."}
           </div>
         )}
       </div>

@@ -17,7 +17,6 @@ export async function POST(req: Request) {
     if (!file || bad(file)) {
       return new Response("Missing file", { status: 400 })
     }
-
     const uploadsDir = path.join(process.cwd(), "uploads")
     const full = path.join(uploadsDir, file)
     try { await fs.access(full) } catch { return new Response("Not found", { status: 404 }) }
@@ -36,6 +35,7 @@ export async function POST(req: Request) {
       return new Response("Upstream error", { status: 502 })
     }
 
+    // Simple pass-through (no server buffering)
     return new Response(resp.body, {
       status: 200,
       headers: {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         "X-Accel-Buffering": "no"
       }
     })
-  } catch (e) {
+  } catch {
     return new Response("Proxy failure", { status: 500 })
   }
 }
