@@ -27,6 +27,69 @@ export default function SuccessPanel({ selectedVideo, onDeleteFrame, onRestoreFr
   // NEW: track current index with a ref
   const currentIndexRef = useRef(0)
 
+  const [tooltip, setTooltip] = useState<string | null>(null)
+  const tooltipTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  const showTooltip = (msg: string) => {
+    setTooltip(msg)
+    if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current)
+    tooltipTimeout.current = setTimeout(() => setTooltip(null), 1500) // auto hide
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === "INPUT" || (e.target as HTMLElement).tagName === "TEXTAREA") return
+
+      switch (e.key.toLowerCase()) {
+        case "d":
+          e.preventDefault()
+          if (selectedVideo && idx > 0) {
+            const newIdx = Math.max(0, idx - 1)
+            setIdx(newIdx)
+            currentIndexRef.current = newIdx
+            setPlaying(false)
+            showTooltip("⬅️ Prev Frame (D)")
+          }
+          break
+        case "f":
+          e.preventDefault()
+          if (selectedVideo && idx < selectedVideo.frames.length - 1) {
+            const newIdx = Math.min(selectedVideo.frames.length - 1, idx + 1)
+            setIdx(newIdx)
+            currentIndexRef.current = newIdx
+            setPlaying(false)
+            showTooltip("➡️ Next Frame (F)")
+          }
+          break
+        case "s":
+          e.preventDefault()
+          handleDeleteCurrent()
+          showTooltip("🗑️ Frame Deleted (S)")
+          break
+        case "g":
+          e.preventDefault()
+          handleUndo()
+          showTooltip("↩️ Undo Delete (G)")
+          break
+        case " ":
+          e.preventDefault()
+          if (!selectedVideo) return
+          if (idx >= selectedVideo.frames.length - 1) {
+            setIdx(0)
+            setPlaying(true)
+            showTooltip("▶️ Replay (Space)")
+          } else {
+            setPlaying(p => !p)
+            showTooltip(playing ? "⏸️ Paused" : "▶️ Playing")
+          }
+          break
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [idx, selectedVideo, playing, deletedStack])
+
   // Reset when video changes (stop auto play so progress bar doesn't move while loading)
   useEffect(() => {
     setIdx(0)
@@ -372,6 +435,15 @@ export default function SuccessPanel({ selectedVideo, onDeleteFrame, onRestoreFr
           )}
         </div>
       ) : null}
+
+      {tooltip && (
+        <div
+          className="fixed bottom-6 right-6 bg-black/70 text-white text-xs px-3 py-2 rounded-lg shadow-md
+                     animate-fade-in-out pointer-events-none select-none"
+        >
+          {tooltip}
+        </div>
+      )}
     </div>
   )
 }
